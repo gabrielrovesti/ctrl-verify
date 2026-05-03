@@ -1,4 +1,4 @@
-# formal-reactive-systems
+# ctrl-verify
 
 > Symbolic formal methods for reactive systems — two self-contained projects
 > that share a common theoretical foundation: **BDD-based symbolic reasoning**
