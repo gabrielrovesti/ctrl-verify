@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  factory.svg — Factory Plant Visualization
+  Grid: 6 x 4 cells, 90 px per cell, grid origin at SVG (10,10).
+  Cell centre for grid pos (gx,gy): cx = 10+(gx-1)*90+45, cy = 10+(4-gy)*90+45
+  Status panels on the right (x >= 575).
+  Element IDs are coupled to CIF state variables via svgout/svgin declarations
+  in factory.cif.
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="820" height="390" viewBox="0 0 820 390">
+
+  <defs>
+    <style>
+      * { font-family: Arial, Helvetica, sans-serif; }
+      .cell      { fill: #f0e0c8; stroke: #9a7a5a; stroke-width: 1.5; }
+      .cell-src  { fill: #d4edda; stroke: #9a7a5a; stroke-width: 1.5; }
+      .cell-tgt  { fill: #d1ecf1; stroke: #9a7a5a; stroke-width: 1.5; }
+      .cell-cs   { fill: #fff3cd; stroke: #9a7a5a; stroke-width: 1.5; }
+      .cell-mach { fill: #e8d5b0; stroke: #9a7a5a; stroke-width: 1.5; }
+      .lbl-big   { font-size: 11px; font-weight: bold; text-anchor: middle;
+                   dominant-baseline: middle; fill: #333; }
+      .lbl-sm    { font-size: 9px; text-anchor: middle;
+                   dominant-baseline: middle; fill: #666; }
+      .lbl-coord { font-size: 8px; text-anchor: middle; fill: #999; }
+      .panel-box { fill: #ffffff; stroke: #444; stroke-width: 2; rx: 6; }
+      .panel-hdr { font-size: 13px; font-weight: bold; fill: #222; }
+      .panel-key { font-size: 10px; fill: #555; }
+      .panel-val { font-size: 10px; font-weight: bold; fill: #222; }
+      .bat-bg    { fill: #d0d0d0; stroke: #aaa; stroke-width: 1; }
+      .bat-cap   { fill: #888; }
+    </style>
+  </defs>
+
+  <!-- ========================================================
+       GRID CELLS  (columns 1-6, rows y=4 top to y=1 bottom)
+       ======================================================== -->
+
+  <!-- ROW y=4  (svg y: 10..100) -->
+  <rect class="cell-src"  x="10"  y="10" width="90" height="90"/><!-- (1,4) Source -->
+  <rect class="cell"      x="100" y="10" width="90" height="90"/><!-- (2,4) -->
+  <rect class="cell-cs"   x="190" y="10" width="90" height="90"/><!-- (3,4) CS2   -->
+  <rect class="cell"      x="280" y="10" width="90" height="90"/><!-- (4,4) -->
+  <rect class="cell"      x="370" y="10" width="90" height="90"/><!-- (5,4) -->
+  <rect class="cell"      x="460" y="10" width="90" height="90"/><!-- (6,4) -->
+
+  <!-- ROW y=3  (svg y: 100..190) -->
+  <rect class="cell"      x="10"  y="100" width="90" height="90"/><!-- (1,3) -->
+  <rect class="cell"      x="100" y="100" width="90" height="90"/><!-- (2,3) -->
+  <rect class="cell-mach" x="190" y="100" width="90" height="90"/><!-- (3,3) M1/D1 -->
+  <rect class="cell"      x="280" y="100" width="90" height="90"/><!-- (4,3) -->
+  <rect class="cell"      x="370" y="100" width="90" height="90"/><!-- (5,3) -->
+  <rect class="cell"      x="460" y="100" width="90" height="90"/><!-- (6,3) -->
+
+  <!-- ROW y=2  (svg y: 190..280) -->
+  <rect class="cell"      x="10"  y="190" width="90" height="90"/><!-- (1,2) -->
+  <rect class="cell"      x="100" y="190" width="90" height="90"/><!-- (2,2) -->
+  <rect class="cell"      x="190" y="190" width="90" height="90"/><!-- (3,2) -->
+  <rect class="cell"      x="280" y="190" width="90" height="90"/><!-- (4,2) -->
+  <rect class="cell-mach" x="370" y="190" width="90" height="90"/><!-- (5,2) M2/D2 -->
+  <rect class="cell"      x="460" y="190" width="90" height="90"/><!-- (6,2) -->
+
+  <!-- ROW y=1  (svg y: 280..370) -->
+  <rect class="cell-mach" x="10"  y="280" width="90" height="90"/><!-- (1,1) M3/D3 -->
+  <rect class="cell"      x="100" y="280" width="90" height="90"/><!-- (2,1) -->
+  <rect class="cell"      x="190" y="280" width="90" height="90"/><!-- (3,1) -->
+  <rect class="cell-cs"   x="280" y="280" width="90" height="90"/><!-- (4,1) CS1   -->
+  <rect class="cell"      x="370" y="280" width="90" height="90"/><!-- (5,1) -->
+  <rect class="cell-tgt"  x="460" y="280" width="90" height="90"/><!-- (6,1) Target -->
+
+  <!-- Grid outer border -->
+  <rect x="10" y="10" width="540" height="360" fill="none" stroke="#555" stroke-width="2"/>
+
+  <!-- ========================================================
+       TILE LABELS & ICONS
+       ======================================================== -->
+
+  <!-- SOURCE (1,4) — center (55,55) -->
+  <text x="55" y="46" class="lbl-big" fill="#155724">Source</text>
+  <text x="55" y="60" class="lbl-sm"  fill="#155724">∞ workpieces</text>
+  <text x="55" y="91" class="lbl-coord">(1,4)</text>
+
+  <!-- CHARGING STATION 2 (3,4) — center (235,55) -->
+  <!-- Lightning bolt icon -->
+  <polygon points="240,18 228,52 236,52 228,80 248,46 240,46"
+           fill="#f0a000" stroke="#c07800" stroke-width="1"/>
+  <text x="235" y="82" class="lbl-sm">CS2  (3,4)</text>
+
+  <!-- MACHINE 1 / DEPOT 1 (3,3) — center (235,145) -->
+  <rect id="m1-indicator" x="194" y="104" width="82" height="18" rx="3" fill="#22cc55"/>
+  <text x="235" y="115" class="lbl-sm" fill="white" font-weight="bold">Machine 1</text>
+  <text x="235" y="138" class="lbl-big">M1 / D1</text>
+  <text x="201" y="158" class="lbl-sm">D1 count:</text>
+  <text id="depot1-count" x="255" y="158" class="panel-val" text-anchor="middle">0</text>
+  <text x="235" y="181" class="lbl-coord">(3,3)</text>
+
+  <!-- MACHINE 2 / DEPOT 2 (5,2) — center (415,235) -->
+  <rect id="m2-indicator" x="374" y="194" width="82" height="18" rx="3" fill="#22cc55"/>
+  <text x="415" y="205" class="lbl-sm" fill="white" font-weight="bold">Machine 2</text>
+  <text x="415" y="228" class="lbl-big">M2 / D2</text>
+  <text x="381" y="248" class="lbl-sm">D2 count:</text>
+  <text id="depot2-count" x="435" y="248" class="panel-val" text-anchor="middle">0</text>
+  <text x="415" y="271" class="lbl-coord">(5,2)</text>
+
+  <!-- MACHINE 3 / DEPOT 3 (1,1) — center (55,325) -->
+  <rect id="m3-indicator" x="14" y="284" width="82" height="18" rx="3" fill="#22cc55"/>
+  <text x="55"  y="295" class="lbl-sm" fill="white" font-weight="bold">Machine 3</text>
+  <text x="55"  y="318" class="lbl-big">M3 / D3</text>
+  <text x="21"  y="338" class="lbl-sm">D3 count:</text>
+  <text id="depot3-count" x="75" y="338" class="panel-val" text-anchor="middle">0</text>
+  <text x="55"  y="361" class="lbl-coord">(1,1)</text>
+
+  <!-- CHARGING STATION 1 (4,1) — center (325,325) -->
+  <polygon points="330,288 318,322 326,322 318,360 338,326 330,326"
+           fill="#f0a000" stroke="#c07800" stroke-width="1"/>
+  <text x="325" y="362" class="lbl-sm">CS1  (4,1)</text>
+
+  <!-- TARGET (6,1) — center (505,325) -->
+  <text x="505" y="316" class="lbl-big" fill="#0c4a6e">Target</text>
+  <text x="505" y="330" class="lbl-sm"  fill="#0c4a6e">∞ capacity</text>
+  <text x="505" y="361" class="lbl-coord">(6,1)</text>
+
+  <!-- ========================================================
+       ROVERS  (drawn on top of cell content)
+       IDs blue-rover-circle / orange-rover-circle are updated
+       by CIF svgout to reflect current grid position.
+       ======================================================== -->
+
+  <!-- Orange rover — initial position (3,2) → SVG cx=235 cy=235 -->
+  <circle id="orange-rover-circle" cx="235" cy="235" r="26"
+          fill="#ff6600" stroke="#cc4400" stroke-width="2.5" opacity="0.92"/>
+
+  <!-- Blue rover — initial position (5,2) → SVG cx=415 cy=235 -->
+  <circle id="blue-rover-circle" cx="415" cy="235" r="26"
+          fill="#1e5fcc" stroke="#0f3d99" stroke-width="2.5" opacity="0.92"/>
+
+  <!-- ========================================================
+       STATUS PANEL — BLUE ROVER  (x=575, y=10, w=235, h=185)
+       ======================================================== -->
+  <rect x="575" y="10" width="235" height="185" rx="6"
+        fill="white" stroke="#444" stroke-width="2"/>
+
+  <!-- Header -->
+  <text x="588" y="33" class="panel-hdr">Blue Rover</text>
+  <line x1="575" y1="41" x2="810" y2="41" stroke="#444" stroke-width="1"/>
+
+  <!-- Energy label -->
+  <text x="588" y="58" class="panel-key">Energy</text>
+
+  <!-- Battery track + fill bar -->
+  <rect class="bat-bg" x="588" y="65" width="120" height="18" rx="3"/>
+  <rect id="blue-bat-bar" x="588" y="65" width="120" height="18" rx="3" fill="#1e5fcc"/>
+  <!-- Battery cap bump -->
+  <rect class="bat-cap" x="710" y="69" width="9" height="10" rx="2"/>
+
+  <!-- Position row -->
+  <text x="588" y="106" class="panel-key">Position</text>
+  <text x="655" y="106" class="panel-key">x:</text>
+  <text id="blue-pos-x" x="670" y="106" class="panel-val">5</text>
+  <text x="700" y="106" class="panel-key">y:</text>
+  <text id="blue-pos-y" x="715" y="106" class="panel-val">2</text>
+
+  <!-- Cargo rows -->
+  <text x="588" y="128" class="panel-key">Content:</text>
+  <text x="648" y="128" class="panel-key">wp1:</text>
+  <text id="blue-wp1" x="686" y="128" class="panel-val">0</text>
+  <text x="715" y="128" class="panel-key">wp2:</text>
+  <text id="blue-wp2" x="753" y="128" class="panel-val">0</text>
+
+  <text x="648" y="150" class="panel-key">wp3:</text>
+  <text id="blue-wp3" x="686" y="150" class="panel-val">0</text>
+  <text x="715" y="150" class="panel-key">wpT:</text>
+  <text id="blue-wpT" x="753" y="150" class="panel-val">0</text>
+
+  <!-- Legend: cargo slot meanings -->
+  <text x="588" y="173" class="lbl-coord" text-anchor="start">
+    wp1=Src→M1  wp2=D1→M2  wp3=D2→M3  wpT=D3→Tgt
+  </text>
+
+  <!-- ========================================================
+       STATUS PANEL — ORANGE ROVER  (x=575, y=205, w=235, h=175)
+       ======================================================== -->
+  <rect x="575" y="205" width="235" height="175" rx="6"
+        fill="white" stroke="#444" stroke-width="2"/>
+
+  <!-- Header -->
+  <text x="588" y="228" class="panel-hdr">Orange Rover</text>
+  <line x1="575" y1="236" x2="810" y2="236" stroke="#444" stroke-width="1"/>
+
+  <!-- Energy label -->
+  <text x="588" y="253" class="panel-key">Energy</text>
+
+  <!-- Battery track + fill bar -->
+  <rect class="bat-bg" x="588" y="260" width="120" height="18" rx="3"/>
+  <rect id="orange-bat-bar" x="588" y="260" width="120" height="18" rx="3" fill="#ff6600"/>
+  <rect class="bat-cap" x="710" y="264" width="9" height="10" rx="2"/>
+
+  <!-- Position row -->
+  <text x="588" y="301" class="panel-key">Position</text>
+  <text x="655" y="301" class="panel-key">x:</text>
+  <text id="orange-pos-x" x="670" y="301" class="panel-val">3</text>
+  <text x="700" y="301" class="panel-key">y:</text>
+  <text id="orange-pos-y" x="715" y="301" class="panel-val">2</text>
+
+  <!-- Role note -->
+  <text x="588" y="323" class="panel-key">Role: repair broken machines</text>
+  <text x="588" y="340" class="lbl-coord" text-anchor="start">
+    Machine state: ■ green=idle  ■ gold=working  ■ red=broken
+  </text>
+
+  <!-- ========================================================
+       COORDINATE AXIS LABELS (optional, along margins)
+       ======================================================== -->
+  <!-- Column headers (x-axis) along top -->
+  <text x="55"  y="6" class="lbl-coord">x=1</text>
+  <text x="145" y="6" class="lbl-coord">x=2</text>
+  <text x="235" y="6" class="lbl-coord">x=3</text>
+  <text x="325" y="6" class="lbl-coord">x=4</text>
+  <text x="415" y="6" class="lbl-coord">x=5</text>
+  <text x="505" y="6" class="lbl-coord">x=6</text>
+  <!-- Row headers (y-axis) along left -->
+  <text x="4" y="55"  class="lbl-coord" text-anchor="end">y=4</text>
+  <text x="4" y="145" class="lbl-coord" text-anchor="end">y=3</text>
+  <text x="4" y="235" class="lbl-coord" text-anchor="end">y=2</text>
+  <text x="4" y="325" class="lbl-coord" text-anchor="end">y=1</text>
+
+</svg>
