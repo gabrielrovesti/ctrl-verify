@@ -1,0 +1,332 @@
+// ============================================================
+// factory.cif
+// Supervisory Control Specification — Factory Plant
+//
+// Grid: 6 x 4 (x in [1,6], y in [1,4])
+//   Bottom-left: (1,1)   Top-right: (6,4)
+//
+// Key tile positions:
+//   Source      : (1,4)
+//   M1 / D1     : (3,3)
+//   M2 / D2     : (5,2)
+//   M3 / D3     : (1,1)
+//   Target      : (6,1)
+//   Charging st.: (4,1)  (3,4)
+//
+// Rovers: battery capacity 8, start fully charged
+// Depots: capacity 2
+// Blue rover cargo slots: wp1, wp2, wp3, wpT  (each max 2)
+// ============================================================
+
+
+// ============================================================
+// EVENT DECLARATIONS
+// ============================================================
+
+// Blue rover movement
+controllable b_moveUp, b_moveDown, b_moveLeft, b_moveRight;
+
+// Orange rover movement
+controllable o_moveUp, o_moveDown, o_moveLeft, o_moveRight;
+
+// Charging (R4 enforced at plant level: guard bBat < 8 / oBat < 8)
+controllable b_charge, o_charge;
+
+// Blue rover workpiece operations
+controllable b_pickSource;          // Source  (1,4)  → wp1 slot
+controllable b_dropM1, b_pickD1;    // M1/D1   (3,3)
+controllable b_dropM2, b_pickD2;    // M2/D2   (5,2)
+controllable b_dropM3, b_pickD3;    // M3/D3   (1,1)
+controllable b_dropTarget;          // Target  (6,1)
+
+// Orange rover repair operations
+controllable o_repairM1, o_repairM2, o_repairM3;
+
+// Machine lifecycle (uncontrollable — plant decides outcome)
+uncontrollable m1_succeed, m1_break;
+uncontrollable m2_succeed, m2_break;
+uncontrollable m3_succeed, m3_break;
+
+
+// ============================================================
+// PLANT: BLUE ROVER
+// Variables: position (bx,by), battery bBat, cargo wp1-wpT
+// Initial  : (5,2), full battery (8), no cargo
+// Marked   : initial state (cyclic production; any idle state is acceptable)
+// ============================================================
+plant BlueRover:
+  disc int[1,6] bx   = 5;
+  disc int[1,4] by   = 2;
+  disc int[0,8] bBat = 8;
+  disc int[0,2] wp1  = 0;   // Source → M1 cargo
+  disc int[0,2] wp2  = 0;   // D1    → M2 cargo
+  disc int[0,2] wp3  = 0;   // D2    → M3 cargo
+  disc int[0,2] wpT  = 0;   // D3    → Target cargo
+
+  location:
+    initial; marked;
+
+    // -- Movement: each step consumes 1 energy unit --
+    edge b_moveUp    when by < 4 and bBat > 0 do by   := by   + 1, bBat := bBat - 1;
+    edge b_moveDown  when by > 1 and bBat > 0 do by   := by   - 1, bBat := bBat - 1;
+    edge b_moveLeft  when bx > 1 and bBat > 0 do bx   := bx   - 1, bBat := bBat - 1;
+    edge b_moveRight when bx < 6 and bBat > 0 do bx   := bx   + 1, bBat := bBat - 1;
+
+    // -- Charge (R4 at plant level: only when bBat < 8) --
+    edge b_charge
+         when bBat < 8 and ((bx = 4 and by = 1) or (bx = 3 and by = 4))
+         do bBat := 8;
+
+    // -- Source → wp1 slot: pick at (1,4) --
+    edge b_pickSource
+         when bx = 1 and by = 4 and wp1 < 2
+         do wp1 := wp1 + 1;
+
+    // -- wp1 → Machine 1: drop at (3,3), M1 starts working --
+    edge b_dropM1
+         when bx = 3 and by = 3 and wp1 > 0
+         do wp1 := wp1 - 1;
+
+    // -- Depot 1 → wp2 slot: pick at (3,3) --
+    edge b_pickD1
+         when bx = 3 and by = 3 and wp2 < 2
+         do wp2 := wp2 + 1;
+
+    // -- wp2 → Machine 2: drop at (5,2), M2 starts working --
+    edge b_dropM2
+         when bx = 5 and by = 2 and wp2 > 0
+         do wp2 := wp2 - 1;
+
+    // -- Depot 2 → wp3 slot: pick at (5,2) --
+    edge b_pickD2
+         when bx = 5 and by = 2 and wp3 < 2
+         do wp3 := wp3 + 1;
+
+    // -- wp3 → Machine 3: drop at (1,1), M3 starts working --
+    edge b_dropM3
+         when bx = 1 and by = 1 and wp3 > 0
+         do wp3 := wp3 - 1;
+
+    // -- Depot 3 → wpT slot: pick at (1,1) --
+    edge b_pickD3
+         when bx = 1 and by = 1 and wpT < 2
+         do wpT := wpT + 1;
+
+    // -- wpT → Target: drop at (6,1) --
+    edge b_dropTarget
+         when bx = 6 and by = 1 and wpT > 0
+         do wpT := wpT - 1;
+end
+
+
+// ============================================================
+// PLANT: ORANGE ROVER
+// Variables: position (ox,oy), battery oBat
+// Initial  : (3,2), full battery (8)
+// Marked   : initial state
+// ============================================================
+plant OrangeRover:
+  disc int[1,6] ox   = 3;
+  disc int[1,4] oy   = 2;
+  disc int[0,8] oBat = 8;
+
+  location:
+    initial; marked;
+
+    // -- Movement --
+    edge o_moveUp    when oy < 4 and oBat > 0 do oy   := oy   + 1, oBat := oBat - 1;
+    edge o_moveDown  when oy > 1 and oBat > 0 do oy   := oy   - 1, oBat := oBat - 1;
+    edge o_moveLeft  when ox > 1 and oBat > 0 do ox   := ox   - 1, oBat := oBat - 1;
+    edge o_moveRight when ox < 6 and oBat > 0 do ox   := ox   + 1, oBat := oBat - 1;
+
+    // -- Charge (R4 at plant level: only when oBat < 8) --
+    edge o_charge
+         when oBat < 8 and ((ox = 4 and oy = 1) or (ox = 3 and oy = 4))
+         do oBat := 8;
+
+    // -- Repair: rover must be at the broken machine's tile --
+    edge o_repairM1 when ox = 3 and oy = 3;
+    edge o_repairM2 when ox = 5 and oy = 2;
+    edge o_repairM3 when ox = 1 and oy = 1;
+end
+
+
+// ============================================================
+// PLANT: MACHINE 1  at (3,3)
+// States: idle → working → {idle (succeed) | broken}
+//         broken → idle (repair by orange rover)
+// Synchronises: b_dropM1 (start), m1_succeed / m1_break (outcome),
+//               o_repairM1 (repair)
+// Marked: idle (the "quiescent" productive state)
+// ============================================================
+plant Machine1:
+  location idle:
+    initial; marked;
+    edge b_dropM1 goto working;
+  location working:
+    edge m1_succeed goto idle;
+    edge m1_break   goto broken;
+  location broken:
+    edge o_repairM1 goto idle;
+end
+
+
+// ============================================================
+// PLANT: MACHINE 2  at (5,2)
+// ============================================================
+plant Machine2:
+  location idle:
+    initial; marked;
+    edge b_dropM2 goto working;
+  location working:
+    edge m2_succeed goto idle;
+    edge m2_break   goto broken;
+  location broken:
+    edge o_repairM2 goto idle;
+end
+
+
+// ============================================================
+// PLANT: MACHINE 3  at (1,1)
+// ============================================================
+plant Machine3:
+  location idle:
+    initial; marked;
+    edge b_dropM3 goto working;
+  location working:
+    edge m3_succeed goto idle;
+    edge m3_break   goto broken;
+  location broken:
+    edge o_repairM3 goto idle;
+end
+
+
+// ============================================================
+// PLANT: DEPOT 1  at (3,3) — capacity 2
+// Receives from M1 (m1_succeed), releases to blue rover (b_pickD1)
+// Synchronises with Machine1 on m1_succeed and with BlueRover on b_pickD1
+// Marked: any count is acceptable (progress is delivery to Target)
+// ============================================================
+plant Depot1:
+  disc int[0,2] count = 0;
+  location:
+    initial; marked;
+    edge m1_succeed when count < 2 do count := count + 1;
+    edge b_pickD1   when count > 0 do count := count - 1;
+end
+
+
+// ============================================================
+// PLANT: DEPOT 2  at (5,2) — capacity 2
+// ============================================================
+plant Depot2:
+  disc int[0,2] count = 0;
+  location:
+    initial; marked;
+    edge m2_succeed when count < 2 do count := count + 1;
+    edge b_pickD2   when count > 0 do count := count - 1;
+end
+
+
+// ============================================================
+// PLANT: DEPOT 3  at (1,1) — capacity 2
+// ============================================================
+plant Depot3:
+  disc int[0,2] count = 0;
+  location:
+    initial; marked;
+    edge m3_succeed when count < 2 do count := count + 1;
+    edge b_pickD3   when count > 0 do count := count - 1;
+end
+
+
+// ============================================================
+// REQUIREMENTS
+//
+// R1, R2, R3, R5, R6  →  formalized as requirement invariants (5 >= 3)
+// R4                   →  enforced at plant level (charge guard bBat < 8)
+// ============================================================
+
+// R1: No rover may have an empty battery on a non-charging tile.
+//     Formally: bBat = 0 → rover is at a charging station  (and same for orange)
+requirement inv R1_NoBatteryDrain:
+      (BlueRover.bBat  > 0
+       or (BlueRover.bx  = 4 and BlueRover.by  = 1)
+       or (BlueRover.bx  = 3 and BlueRover.by  = 4))
+  and (OrangeRover.oBat > 0
+       or (OrangeRover.ox = 4 and OrangeRover.oy = 1)
+       or (OrangeRover.ox = 3 and OrangeRover.oy = 4));
+
+// R2: The sum of the two battery levels is always >= 1.
+//     Prevents simultaneous depletion of both rovers.
+requirement inv R2_BatterySum:
+  BlueRover.bBat + OrangeRover.oBat >= 1;
+
+// R3: The blue rover's total cargo never exceeds 4 units.
+//     (Individual slots are each bounded to 2; this cross-slot constraint
+//      requires an explicit requirement.)
+requirement inv R3_MaxCarry:
+  BlueRover.wp1 + BlueRover.wp2 + BlueRover.wp3 + BlueRover.wpT <= 4;
+
+// R5: Rovers never occupy the same cell simultaneously.
+requirement inv R5_NoCollision:
+  not (BlueRover.bx = OrangeRover.ox and BlueRover.by = OrangeRover.oy);
+
+// R6: If D3 is full (count = 2), D1 may hold at most 1 workpiece.
+//     Prevents pipeline backup: a full D3 signals M3 is idle; M2 should
+//     not saturate D1 while M1 is blocked waiting for D1 space.
+requirement inv R6_DepotConstraint:
+  Depot3.count < 2 or Depot1.count <= 1;
+
+
+// ============================================================
+// SVG VISUALIZATION COUPLING
+// Cell size: 90 px  |  Grid origin offset: (10, 10)
+// Cell center for grid position (gx, gy):
+//   svg_cx = 10 + (gx - 1) * 90 + 45
+//   svg_cy = 10 + (4  - gy) * 90 + 45
+// ============================================================
+svgfile "factory.svg";
+
+// --- Rover positions (cx / cy are numeric SVG attributes) ---
+svgout id "blue-rover-circle"   attr "cx" value 10 + (BlueRover.bx  - 1) * 90 + 45;
+svgout id "blue-rover-circle"   attr "cy" value 10 + (4 - BlueRover.by)  * 90 + 45;
+svgout id "orange-rover-circle" attr "cx" value 10 + (OrangeRover.ox - 1) * 90 + 45;
+svgout id "orange-rover-circle" attr "cy" value 10 + (4 - OrangeRover.oy) * 90 + 45;
+
+// --- Battery bars: max visual width = 120 px for 8 units (15 px/unit) ---
+svgout id "blue-bat-bar"   attr "width" value BlueRover.bBat   * 15;
+svgout id "orange-bat-bar" attr "width" value OrangeRover.oBat * 15;
+
+// --- Status text: positions and cargo ---
+svgout id "blue-pos-x"   attr "textContent" value fmt("%d", BlueRover.bx);
+svgout id "blue-pos-y"   attr "textContent" value fmt("%d", BlueRover.by);
+svgout id "orange-pos-x" attr "textContent" value fmt("%d", OrangeRover.ox);
+svgout id "orange-pos-y" attr "textContent" value fmt("%d", OrangeRover.oy);
+svgout id "blue-wp1"     attr "textContent" value fmt("%d", BlueRover.wp1);
+svgout id "blue-wp2"     attr "textContent" value fmt("%d", BlueRover.wp2);
+svgout id "blue-wp3"     attr "textContent" value fmt("%d", BlueRover.wp3);
+svgout id "blue-wpT"     attr "textContent" value fmt("%d", BlueRover.wpT);
+
+// --- Depot counts ---
+svgout id "depot1-count" attr "textContent" value fmt("%d", Depot1.count);
+svgout id "depot2-count" attr "textContent" value fmt("%d", Depot2.count);
+svgout id "depot3-count" attr "textContent" value fmt("%d", Depot3.count);
+
+// --- Machine state indicators (fill colour encodes state) ---
+//     green=#22cc55  working=gold=#ffbb22  broken=red=#cc2222
+svgout id "m1-indicator" attr "fill"
+    value if Machine1.idle    then "#22cc55"
+          elif Machine1.working then "#ffbb22"
+          else                       "#cc2222"
+          end;
+svgout id "m2-indicator" attr "fill"
+    value if Machine2.idle    then "#22cc55"
+          elif Machine2.working then "#ffbb22"
+          else                       "#cc2222"
+          end;
+svgout id "m3-indicator" attr "fill"
+    value if Machine3.idle    then "#22cc55"
+          elif Machine3.working then "#ffbb22"
+          else                       "#cc2222"
+          end;
